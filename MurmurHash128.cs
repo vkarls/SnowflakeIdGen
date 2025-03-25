@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace SnowflakeIdGen
 {
     using System;
+	using System.Numerics;
 
     public static class MurmurHash128
     {
@@ -101,22 +102,23 @@ namespace SnowflakeIdGen
             return h;
         }
 
-        // Convert a 128-bit Murmur hash to a base62 string
-        public static string ToBase62(ulong high, ulong low)
-        {
-            string base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-            string result = string.Empty;
+		static string base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		public static string ToBase62(ulong high, ulong low)
+		{
+			// Combine high and low into a single BigInteger (128-bit)
+			BigInteger bigInt = ((BigInteger)high << 64) | low;
 
-            ulong combinedHash = (high << 64) | low;
+			// Encode to Base62
+			StringBuilder sb = new StringBuilder();
+			while (bigInt > 0)
+			{
+				bigInt = BigInteger.DivRem(bigInt, 62, out var remainder);
+				sb.Insert(0, base62Chars[(int)remainder]);
+			}
 
-            while (combinedHash > 0)
-            {
-                result = base62Chars[(int)(combinedHash % 62)] + result;
-                combinedHash /= 62;
-            }
+			return sb.Length > 0 ? sb.ToString() : "0";
+		}
 
-            return result;
-        }
 
         // Example of usage
         //public static void Main(string[] args)
